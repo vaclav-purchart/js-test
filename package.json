@@ -16,6 +16,10 @@
     "build-cjs": "npx rollup index.mjs --file index.build.cjs --format cjs",
     "test": "js-test test.mjs deep-equal.mjs test.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com:vaclav-purchart/js-test.git"
+  },
   "keywords": [
     "javascript",
     "tests",
