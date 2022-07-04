@@ -1,0 +1,26 @@
+{
+  "name": "js-test",
+  "version": "1.0.0",
+  "description": "Simple, zero-dependency test framework inspired by mocha and jest.",
+  "main": "index.mjs",
+  "author": "Vaclav Purchart",
+  "license": "MIT",
+  "exports": {
+    "import": "./index.mjs",
+    "require": "./index.build.cjs"
+  },
+  "bin": {
+    "js-test": "./cli.js"
+  },
+  "scripts": {
+    "build-cjs": "npx rollup index.mjs --file index.build.cjs --format cjs",
+    "test": "js-test test.mjs deep-equal.mjs test.js"
+  },
+  "keywords": [
+    "javascript",
+    "tests",
+    "unit testing",
+    "mocha",
+    "jest"
+  ]
+}
