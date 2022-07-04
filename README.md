@@ -4,8 +4,21 @@ Simple, zero-dependency test framework inspired by mocha and jest.
 Test framework which allows to run both synchronous and asynchronous tests and to structure them into test suites.
 
 ## Usage
+### ES6 modules
 ```javascript
 import { describe, test, assert } from 'js-test'
+
+describe('my test suite', () => {
+	test('my async test', async () => {
+		const response = await fetch('https://github.com')
+		assert.equals(response.status, 200, 'should return HTTP 200 status')
+	})
+})
+```
+
+### CommonJS modules
+```javascript
+const { describe, test, assert } = require('js-test')
 
 describe('my test suite', () => {
 	test('my async test', async () => {
