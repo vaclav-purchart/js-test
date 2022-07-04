@@ -1,5 +1,5 @@
 {
-  "name": "js-test",
+  "name": "@vaclav-purchart/js-test",
   "version": "1.0.0",
   "description": "Simple, zero-dependency test framework inspired by mocha and jest.",
   "main": "index.mjs",

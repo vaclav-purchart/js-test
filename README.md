@@ -1,4 +1,4 @@
-# js-test
+# @vaclav-purchart/js-test
 Simple, zero-dependency test framework inspired by mocha and jest.
 
 Test framework which allows to run both synchronous and asynchronous tests and to structure them into test suites.
@@ -6,7 +6,7 @@ Test framework which allows to run both synchronous and asynchronous tests and t
 ## Usage
 ### ES6 modules
 ```javascript
-import { describe, test, assert } from 'js-test'
+import { describe, test, assert } from '@vaclav-purchart/js-test'
 
 describe('my test suite', () => {
 	test('my async test', async () => {
@@ -18,7 +18,7 @@ describe('my test suite', () => {
 
 ### CommonJS modules
 ```javascript
-const { describe, test, assert } = require('js-test')
+const { describe, test, assert } = require('@vaclav-purchart/js-test')
 
 describe('my test suite', () => {
 	test('my async test', async () => {
