@@ -1,6 +1,6 @@
 {
   "name": "@vaclav-purchart/js-test",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Simple, zero-dependency test framework inspired by mocha and jest.",
   "main": "index.mjs",
   "author": "Vaclav Purchart",
