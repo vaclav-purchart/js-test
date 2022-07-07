@@ -62,7 +62,7 @@ const setReporter = (handler) => {
 
 const sanitizeStack = (stack) => {
 	return stack.split('\n')
-		.filter(line => !line.includes('js-test/assert.mjs'))
+		.filter((line) => !line.includes('js-test/assert.mjs'))
 		.join('\n')
 }
 
@@ -95,6 +95,7 @@ const describe = (name, handler) => {
 		parent,
 	}
 
+	verboseLog(`[suite define] ${name}`)
 	tests.push(suiteDefinition)
 }
 
@@ -108,6 +109,7 @@ const test = (name, handler) => {
 	const parent = state.currentSuite || null
 	const tests = parent ? parent.tests : state.tests
 
+	verboseLog(`[test define] ${name}`)
 	tests.push({
 		name,
 		handler,
@@ -118,7 +120,7 @@ const test = (name, handler) => {
 }
 
 const teardownHandler = () => {
-	const { errors } = state
+	const {errors} = state
 	if (state.stack.length === 0) {
 		if (errors.length === 0) {
 			report('Tests run completed successfully.')
@@ -135,8 +137,6 @@ const runTestsSequence = (tests = [], next) => {
 		return
 	}
 	let index = 0
-	let test = tests[index]
-
 	const sequenceIterator = () => {
 		index++
 		if (index >= tests.length) {
@@ -150,8 +150,8 @@ const runTestsSequence = (tests = [], next) => {
 }
 
 const runTestHandler = (testDefinition, next) => {
-	const { stack } = state
-	const { name, handler, tests, type } = testDefinition
+	const {stack} = state
+	const {name, handler, tests, type} = testDefinition
 	verboseLog(`[start] ${name}`)
 	stack.push(name)
 	let failedMsg
@@ -184,8 +184,8 @@ const runTestHandler = (testDefinition, next) => {
 	wrapMaybePromise(handler, {resolve, reject})
 }
 
-const runAllHandler = () => {
-	const { tests } = state
+const runAllHandler = (next) => {
+	const {tests} = state
 	if (!tests.length) {
 		report('NO TESTS FOUND!')
 		return
@@ -194,7 +194,10 @@ const runAllHandler = () => {
 	const runTests = () => {
 		runTestsSequence(tests, () => {
 			wrapMaybePromise(state.globalAfterHandler, {
-				resolve: teardownHandler,
+				resolve: () => {
+					teardownHandler()
+					next && next()
+				},
 				reject: (err) => { throw err },
 			})
 		})
@@ -206,7 +209,11 @@ const runAllHandler = () => {
 	})
 }
 
-setTimeout(runAllHandler, 1)
+let runViaCli = typeof global !== 'undefined' && global['@vaclav-purchart/js-test'] === 'run-via-cli'
+
+if (!runViaCli) {
+	setTimeout(runAllHandler, 1)
+}
 
 // aliases
 const it = test
@@ -226,4 +233,7 @@ export {
 
 	globalBefore,
 	globalAfter,
+
+	// interface for CLI runner
+	runAllHandler,
 }

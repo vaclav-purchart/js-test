@@ -1,6 +1,6 @@
-const { describe, test, assert } = require('./index.build.cjs')
+const {describe, test, assert} = require('./index.build.cjs')
 
-describe('test suite', () => {
+describe('test.js - test suite', () => {
 	test('test case', () => {
 		assert.isTrue(true)
 	})

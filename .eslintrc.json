@@ -1,0 +1,47 @@
+{
+	"env": {
+		"browser": true,
+		"es2021": true
+	},
+	"extends": "eslint:recommended",
+	"parserOptions": {
+		"ecmaVersion": 13,
+		"sourceType": "module"
+	},
+	"overrides": [
+		{
+			"files": [
+				"*.js"
+			],
+			"env": {
+				"node": true
+			}
+		}
+	],
+	"ignorePatterns": ["index.build.cjs"],
+	"rules": {
+		"comma-dangle": ["warn", "always-multiline"],
+		"consistent-return": "warn",
+		"indent": ["warn", "tab", {"SwitchCase": 1}],
+		"no-else-return": "warn",
+		"no-tabs": 0,
+		"no-var": "warn",
+		"radix": "warn",
+		"no-multiple-empty-lines": "warn",
+		"brace-style": ["warn", "stroustrup", {"allowSingleLine": true}],
+		"no-multi-spaces": ["warn", { "ignoreEOLComments": true }],
+		"semi": ["warn", "never"],
+		"quotes": ["warn", "single", { "allowTemplateLiterals": true }],
+		"space-before-function-paren": ["warn", {
+			"anonymous": "never",
+			"named": "never",
+			"asyncArrow": "always"
+		}],
+		"object-curly-spacing": ["warn", "never"],
+		"space-before-blocks": ["warn", "always"],
+		"arrow-parens": ["warn", "always"],
+		"no-console": 0,
+		"no-unused-vars": ["error", { "args": "none" }],
+		"keyword-spacing": "warn"
+	}
+}

@@ -1,30 +1,73 @@
 import isDeepEqual from './deep-equal.mjs'
 
+const getCircularReplacer = () => {
+	const seen = new WeakSet()
+	return (key, value) => {
+		if (typeof value === 'object' && value !== null) {
+			if (seen.has(value)) {
+				return null
+			}
+			seen.add(value)
+		}
+		return value
+	}
+}
+
+const printValue = (rawValue, text = '') => {
+	if (!rawValue) return ''
+	let result = text ? `${text}` : ''
+	let value = rawValue
+	if (rawValue.toString() !== value) {
+		value = JSON.stringify(value, getCircularReplacer(), '  ')
+	}
+	if (value.includes('\n')) {
+		result += `\n${value}`
+	}
+	else {
+		result += value
+	}
+	return result
+}
+export const _printValue = printValue
+
+const getTextDiff = (given, expected) => {
+	if (typeof given !== 'string') throw new TypeError('string required')
+	if (typeof expected !== 'string') throw new TypeError('string required')
+	if (given === expected) return ''
+	const expectedLines = expected.split('\n')
+	const givenLines = given.split('\n')
+
+	for (let i = 0; i < expectedLines.length; i++) {
+		const givenLine = givenLines[i]
+		const expectedLine = expectedLines[i]
+
+		if (givenLine == expectedLine) continue
+		return {
+			expected: expectedLine,
+			given: givenLine,
+		}
+	}
+	return ''
+}
+export const _getTextDiff = getTextDiff
+
 const getErrorBuilder = () => {
 	const error = {
 		message: `Assertion failed.`,
 		expected: undefined,
 		given: undefined,
-	}
-	const printValue = (text, value) => {
-		if (!value) return ''
-		let result = `\n\n${text}`
-		if (value.includes('\n')) {
-			result += `\n${error.expected}`
-		}
-		else {
-			result += error.expected
-		}
-		return result
+		hasValue: false,
 	}
 
 	return {
 		addExpected(expected) {
 			error.expected = expected
+			error.hasValue = true
 			return this
 		},
 		addGiven(given) {
 			error.given = given
+			error.hasValue = true
 			return this
 		},
 		setMessage(message) {
@@ -34,10 +77,28 @@ const getErrorBuilder = () => {
 		},
 
 		build() {
-			return new Error(`${error.message}${printValue('expected: ', error.expected)}${printValue('given: ', error.given)}`)
+			const diff = getTextDiff(
+				printValue(error.given),
+				printValue(error.expected),
+			)
+			let valuesMessage = ''
+			if (error.hasValue) {
+				valuesMessage =
+					`\n\n>>>diff:\n` +
+					`  expected: ${diff.expected}\n` +
+					`  given:    ${diff.given}\n` +
+					`${printValue(error.expected, '\n\n>>> expected: ')}` +
+					`${printValue(error.given, '\n\n>>> given: ')}` +
+					``
+			}
+			return new Error(
+				`${error.message}` +
+				`${valuesMessage}`,
+			)
 		},
 	}
 }
+export const _getErrorBuilder = getErrorBuilder
 
 /**
  * @param {*} given
@@ -59,15 +120,12 @@ const equal = (given, expected, msg) => {
  * @param {*} expected
  * @param {string} msg
  */
- const deepEqual = (given, expected, msg) => {
-	const expectedStr = JSON.stringify(expected, null, '  ')
-	const givenStr = JSON.stringify(given, null, '  ')
-
+const deepEqual = (given, expected, msg) => {
 	if (!isDeepEqual(given, expected)) {
 		throw getErrorBuilder()
 			.setMessage(msg)
-			.addExpected(expectedStr)
-			.addGiven(givenStr)
+			.addExpected(expected)
+			.addGiven(given)
 			.build()
 	}
 }

@@ -55,7 +55,7 @@ test(name, handler)
 
 > Example:
 ```javascript
-import {setReporter, globalBefore, globalAfter} from 'js-test'
+import {setReporter, globalBefore, globalAfter} from '@vaclav-purchart/js-test'
 
 setReporter(sendTestResults)
 

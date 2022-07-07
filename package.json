@@ -13,8 +13,8 @@
     "js-test": "./cli.js"
   },
   "scripts": {
-    "build-cjs": "npx rollup index.mjs --file index.build.cjs --format cjs",
-    "test": "js-test test.mjs deep-equal.mjs test.js"
+    "build": "npx rollup index.mjs --file index.build.cjs --format cjs",
+    "test": "node cli assert.test.mjs test.mjs deep-equal.mjs assert.test.mjs test.js"
   },
   "repository": {
     "type": "git",

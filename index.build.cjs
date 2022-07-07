@@ -31,31 +31,72 @@ function isDeepEqual(obj1, obj2) {
 	return true
 }
 
+const getCircularReplacer = () => {
+	const seen = new WeakSet();
+	return (key, value) => {
+		if (typeof value === 'object' && value !== null) {
+			if (seen.has(value)) {
+				return null
+			}
+			seen.add(value);
+		}
+		return value
+	}
+};
+
+const printValue = (rawValue, text = '') => {
+	if (!rawValue) return ''
+	let result = text ? `${text}` : '';
+	let value = rawValue;
+	if (rawValue.toString() !== value) {
+		value = JSON.stringify(value, getCircularReplacer(), '  ');
+	}
+	if (value.includes('\n')) {
+		result += `\n${value}`;
+	}
+	else {
+		result += value;
+	}
+	return result
+};
+
+const getTextDiff = (given, expected) => {
+	if (typeof given !== 'string') throw new TypeError('string required')
+	if (typeof expected !== 'string') throw new TypeError('string required')
+	if (given === expected) return ''
+	const expectedLines = expected.split('\n');
+	const givenLines = given.split('\n');
+
+	for (let i = 0; i < expectedLines.length; i++) {
+		const givenLine = givenLines[i];
+		const expectedLine = expectedLines[i];
+
+		if (givenLine == expectedLine) continue
+		return {
+			expected: expectedLine,
+			given: givenLine,
+		}
+	}
+	return ''
+};
+
 const getErrorBuilder = () => {
 	const error = {
 		message: `Assertion failed.`,
 		expected: undefined,
 		given: undefined,
-	};
-	const printValue = (text, value) => {
-		if (!value) return ''
-		let result = `\n\n${text}`;
-		if (value.includes('\n')) {
-			result += `\n${error.expected}`;
-		}
-		else {
-			result += error.expected;
-		}
-		return result
+		hasValue: false,
 	};
 
 	return {
 		addExpected(expected) {
 			error.expected = expected;
+			error.hasValue = true;
 			return this
 		},
 		addGiven(given) {
 			error.given = given;
+			error.hasValue = true;
 			return this
 		},
 		setMessage(message) {
@@ -65,7 +106,24 @@ const getErrorBuilder = () => {
 		},
 
 		build() {
-			return new Error(`${error.message}${printValue('expected: ', error.expected)}${printValue('given: ', error.given)}`)
+			const diff = getTextDiff(
+				printValue(error.given),
+				printValue(error.expected),
+			);
+			let valuesMessage = '';
+			if (error.hasValue) {
+				valuesMessage =
+					`\n\n>>>diff:\n` +
+					`  expected: ${diff.expected}\n` +
+					`  given:    ${diff.given}\n` +
+					`${printValue(error.expected, '\n\n>>> expected: ')}` +
+					`${printValue(error.given, '\n\n>>> given: ')}` +
+					``;
+			}
+			return new Error(
+				`${error.message}` +
+				`${valuesMessage}`,
+			)
 		},
 	}
 };
@@ -90,15 +148,12 @@ const equal = (given, expected, msg) => {
  * @param {*} expected
  * @param {string} msg
  */
- const deepEqual = (given, expected, msg) => {
-	const expectedStr = JSON.stringify(expected, null, '  ');
-	const givenStr = JSON.stringify(given, null, '  ');
-
+const deepEqual = (given, expected, msg) => {
 	if (!isDeepEqual(given, expected)) {
 		throw getErrorBuilder()
 			.setMessage(msg)
-			.addExpected(expectedStr)
-			.addGiven(givenStr)
+			.addExpected(expected)
+			.addGiven(given)
 			.build()
 	}
 };
@@ -206,7 +261,7 @@ const setReporter = (handler) => {
 
 const sanitizeStack = (stack) => {
 	return stack.split('\n')
-		.filter(line => !line.includes('js-test/assert.mjs'))
+		.filter((line) => !line.includes('js-test/assert.mjs'))
 		.join('\n')
 };
 
@@ -238,7 +293,6 @@ const describe = (name, handler) => {
 		tests: [],
 		parent,
 	};
-
 	tests.push(suiteDefinition);
 };
 
@@ -251,7 +305,6 @@ const test = (name, handler) => {
 
 	const parent = state.currentSuite || null;
 	const tests = parent ? parent.tests : state.tests;
-
 	tests.push({
 		name,
 		handler,
@@ -262,7 +315,7 @@ const test = (name, handler) => {
 };
 
 const teardownHandler = () => {
-	const { errors } = state;
+	const {errors} = state;
 	if (state.stack.length === 0) {
 		if (errors.length === 0) {
 			report('Tests run completed successfully.');
@@ -279,8 +332,6 @@ const runTestsSequence = (tests = [], next) => {
 		return
 	}
 	let index = 0;
-	tests[index];
-
 	const sequenceIterator = () => {
 		index++;
 		if (index >= tests.length) {
@@ -294,8 +345,8 @@ const runTestsSequence = (tests = [], next) => {
 };
 
 const runTestHandler = (testDefinition, next) => {
-	const { stack } = state;
-	const { name, handler, tests, type } = testDefinition;
+	const {stack} = state;
+	const {name, handler, tests, type} = testDefinition;
 	stack.push(name);
 	let failedMsg;
 
@@ -325,8 +376,8 @@ const runTestHandler = (testDefinition, next) => {
 	wrapMaybePromise(handler, {resolve, reject});
 };
 
-const runAllHandler = () => {
-	const { tests } = state;
+const runAllHandler = (next) => {
+	const {tests} = state;
 	if (!tests.length) {
 		report('NO TESTS FOUND!');
 		return
@@ -335,7 +386,10 @@ const runAllHandler = () => {
 	const runTests = () => {
 		runTestsSequence(tests, () => {
 			wrapMaybePromise(state.globalAfterHandler, {
-				resolve: teardownHandler,
+				resolve: () => {
+					teardownHandler();
+					next && next();
+				},
 				reject: (err) => { throw err },
 			});
 		});
@@ -347,7 +401,11 @@ const runAllHandler = () => {
 	});
 };
 
-setTimeout(runAllHandler, 1);
+let runViaCli = typeof global !== 'undefined' && global['@vaclav-purchart/js-test'] === 'run-via-cli';
+
+if (!runViaCli) {
+	setTimeout(runAllHandler, 1);
+}
 
 // aliases
 const it = test;
@@ -358,6 +416,7 @@ exports.describe = describe;
 exports.globalAfter = globalAfter;
 exports.globalBefore = globalBefore;
 exports.it = it;
+exports.runAllHandler = runAllHandler;
 exports.setReporter = setReporter;
 exports.suite = suite;
 exports.test = test;

@@ -1,6 +1,6 @@
-import { describe, it, test } from '.'
+import {describe, it, assert} from '.'
 
-describe('deep-equal', () => {
+describe('deep-equal.test.mjs - deep-equal', () => {
 	describe('primitives', () => {
 		it('success', () => {
 			assert.deepEqual(1, 1)

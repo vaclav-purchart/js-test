@@ -1,2 +1,7 @@
 .vscode/
 .editorconfig
+*test.js
+*test.mjs
+.eslintrc.json
+.editorconfig
+.nvmrc
